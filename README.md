@@ -20,7 +20,7 @@ This repository redistributes, **for reproducibility and convenience**, several 
     - `GW170817_M1`: Mass-radius posterior for the primary neutron star in GW170817
     - `GW170817_M2`: Mass-radius posterior for the secondary neutron star in GW170817
     - `GW170817`: Additional GW170817 data from which M1 and M2 data are derived
-    - `J0437`: Mass-radius posterior for PSR J0437-4715
+    - `J0437`: Mass-radius posterior for PSR J0437-4715 from 
 
     Notes: These datasets are redistributed verbatim from their original sources for reproducibility. The NICER data for PSR J0030+0451 originates from Bogdanov et al. 2019 supplementary materials.
 
