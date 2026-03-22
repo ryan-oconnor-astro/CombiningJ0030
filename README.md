@@ -20,10 +20,21 @@ This repository redistributes, **for reproducibility and convenience**, several 
     - `GW170817_M1`: Mass-radius posterior for the primary neutron star in GW170817
     - `GW170817_M2`: Mass-radius posterior for the secondary neutron star in GW170817
     - `GW170817`: Additional GW170817 data from which M1 and M2 data are derived
-    - `J0437`: Mass-radius posterior for PSR J0437-4715 from 
+    - `J0437`: Mass-radius posterior for PSR J0437-4715
 
     Notes: These datasets are redistributed verbatim from their original sources for reproducibility. The NICER data for PSR J0030+0451 originates from Bogdanov et al. 2019 supplementary materials.
 
+### Notebooks included and their workflow
+
+* `NewMethodCompactness.ipynb`
+  - Implements Bayesian combination of published compactness (`M/R`) posteriors using a mixture model (`p * g + (1-p) * b`), KDE smoothing, and numerical marginalization over nuisance parameters (e.g., `p`, `alpha`, `sigma`).
+  - Loads data from `datafiles/` (e.g., `ST_PST19`, `ST_PDT`, `2spot`, `3spot`, `PDT_U26`).
+  - Produces plots and inferred constraints on NS mass-radius distributions, writing outputs to `figures/`.
+
+* `NewMethodMassRadius.ipynb`
+- Performs a comparable analysis in 2D M--R space (`M/R`) with the same model and dataset structure.
+  - Computes marginal posteriors, credible intervals, and model scores for each source.
+  - Includes example figures for compactness constraints and comparison with mass-radius results.
 
 ### Licensing and attribution
 
