@@ -4,10 +4,13 @@ This repository redistributes, **for reproducibility and convenience**, several 
 
 ### Contents and provenance
 
+### Headline Result: Combined Posterior of J0030 M--R 
+* `combined_posterior.txt` is a two-column text file where the first column is mass (M) in solar masses and the second column is equatorial radius (R) in kilometers, containing 10,000 sample points from our posterior combination.
+
 * **Neutron Star Mass-Radius Posterior Samples**
 
   * Directory: `datafiles/`
-    This directory contains posterior samples for neutron star mass and radius measurements from various published analyses. Each entry is a two-column text file (mass in solar masses, radius in km) or a folder containing such files.
+    This directory contains posterior samples for neutron star mass and radius measurements from various published analyses, from which the posterior combination is computed. Each entry is a two-column text file (mass in solar masses, radius in km) or a folder containing such files.
 
     - `ST_PST19`: Posterior from Riley et al. 2019 (NICER analysis of PSR J0030+0451, ST+PST model)
     - `ST_PDT`: Posterior from Vinciguerra et al. 2023 (NICER analysis of PSR J0030+0451, ST+PDT model)
