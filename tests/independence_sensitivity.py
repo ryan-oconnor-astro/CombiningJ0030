@@ -5,7 +5,7 @@ The referee's core objection (feedback.md) is that the 8 input M-R posteriors
 combined in the manuscript are not statistically independent: most of them
 share the same underlying NICER/XMM photons, or are different model fits to
 the exact same data. This script asks a narrower, Option-B-style question:
-*given the published combination method, unchanged, how much do the position
+*given the manuscript combination method, unchanged, how much do the position
 and width of the final posterior move as we relax the independence
 assumption?* It does not attempt to fix the method (that is Option A/C).
 
@@ -19,7 +19,7 @@ is raised to a power w_i <= 1 before the product over the 8 measurements is
 taken. This is the standard "power likelihood" / design-effect correction used
 in meta-analysis to avoid pseudo-replication from correlated or overlapping
 data (e.g. Kish's design effect for clustered samples). At w_i = 1 for all i
-this reduces EXACTLY to the published method. For a group of n measurements
+this reduces EXACTLY to the manuscript method. For a group of n measurements
 that are assumed to share a fraction rho of their statistical information
 (compound-symmetric correlation rho), the design-effect-consistent power is
 
@@ -30,7 +30,7 @@ w=1/n, the whole group counts as one independent measurement).
 
 Scenarios explored
 -------------------
-1. "published"        - w_i = 1 for all 8 (sanity check against the paper).
+1. "manuscript"        - w_i = 1 for all 8 (sanity check against the paper).
 2. "global sweep"     - all 8 treated as ONE group, rho swept 0->1. The most
                          conservative/simplest envelope.
 3. "grouped sweep"    - the four paper-level groups used in
@@ -111,7 +111,7 @@ GROUPS = {
     "Kini":        ["PDT_U26"],
 }
 
-PUBLISHED_C = dict(median=0.172, lo=0.007, hi=0.006)  # manuscript.tex Sec 3.1
+MANUSCRIPT_C = dict(median=0.172, lo=0.007, hi=0.006)  # manuscript.tex Sec 3.1
 
 
 # ----------------------------------------------------------------------------
@@ -180,7 +180,7 @@ for key in MODEL_KEYS:
 def combine_1d(weights):
     """Weighted good/bad combination. weights: dict[model_key] -> power w_i <= 1.
 
-    w_i = 1 for all keys reproduces the published method exactly.
+    w_i = 1 for all keys reproduces the manuscript method exactly.
     """
     w = np.array([weights[key] for key in MODEL_KEYS])[:, None, None]
 
@@ -246,7 +246,7 @@ def referee_informed_weights():
     scalar effective-N via n_eff = n^2 / sum(R), applied as a uniform global
     power. This deliberately does NOT reweight individual models relative to
     each other (that would start to be a methodology fix, i.e. Option A/C);
-    it only asks how much the *published, equally-weighted* method's width
+    it only asks how much the *manuscript, equally-weighted* method's width
     would need to inflate given this correlation structure."""
     n = len(MODEL_KEYS)
     idx = {key: i for i, key in enumerate(MODEL_KEYS)}
@@ -285,11 +285,11 @@ def referee_informed_weights():
 # Run scenarios
 # ----------------------------------------------------------------------------
 
-published = combine_1d({key: 1.0 for key in MODEL_KEYS})
+manuscript = combine_1d({key: 1.0 for key in MODEL_KEYS})
 print("=" * 70)
 print("SANITY CHECK against manuscript.tex Sec 3.1:")
-print(f"  script:     C = {published['median']:.4f} +{published['hi']:.4f} / -{published['lo']:.4f}")
-print(f"  manuscript: C = {PUBLISHED_C['median']:.4f} +{PUBLISHED_C['hi']:.4f} / -{PUBLISHED_C['lo']:.4f}")
+print(f"  script:     C = {manuscript['median']:.4f} +{manuscript['hi']:.4f} / -{manuscript['lo']:.4f}")
+print(f"  manuscript: C = {MANUSCRIPT_C['median']:.4f} +{MANUSCRIPT_C['hi']:.4f} / -{MANUSCRIPT_C['lo']:.4f}")
 print("=" * 70)
 
 rho_values = np.linspace(0.0, 1.0, 11)
@@ -309,13 +309,13 @@ print(f"  grouped_by_paper, rho_within=1  -> N_eff = {sum(len(m) / (1 + (len(m)-
 print(f"  referee_informed                -> N_eff = {ref_n_eff:.2f}"
       f"   (implied width inflation ~ sqrt(8/N_eff) = {np.sqrt(8/ref_n_eff):.2f}x)")
 
-print("\nScenario                          C (median)   width (68%)   width / published")
+print("\nScenario                          C (median)   width (68%)   width / manuscript")
 def _row(label, res):
     width = res["lo"] + res["hi"]
-    pub_width = published["lo"] + published["hi"]
-    print(f"{label:<34} {res['median']:.4f}       {width:.4f}        {width/pub_width:.2f}x")
+    manuscript_width = manuscript["lo"] + manuscript["hi"]
+    print(f"{label:<34} {res['median']:.4f}       {width:.4f}        {width/manuscript_width:.2f}x")
 
-_row("published (rho=0)", published)
+_row("manuscript (rho=0)", manuscript)
 _row("grouped_by_paper, rho=1", grouped_rho1)
 _row("referee_informed", referee_result)
 _row("global, rho=1", global_rho1)
@@ -329,16 +329,16 @@ plt.rcParams.update({"font.size": 13})
 fig, axes = plt.subplots(1, 2, figsize=(15, 5.5))
 
 ax = axes[0]
-pub_width = published["lo"] + published["hi"]
-widths_global = [(r["lo"] + r["hi"]) / pub_width for r in global_results]
-widths_grouped = [(r["lo"] + r["hi"]) / pub_width for r in grouped_results]
+manuscript_width = manuscript["lo"] + manuscript["hi"]
+widths_global = [(r["lo"] + r["hi"]) / manuscript_width for r in global_results]
+widths_grouped = [(r["lo"] + r["hi"]) / manuscript_width for r in grouped_results]
 ax.plot(rho_values, widths_global, "o-", color="black", label="global (all 8 as one group)")
 ax.plot(rho_values, widths_grouped, "s-", color="tab:blue", label="grouped by paper (Riley/Miller/Vinciguerra/Kini)")
-ax.scatter([1.0], [(referee_result["lo"] + referee_result["hi"]) / pub_width],
+ax.scatter([1.0], [(referee_result["lo"] + referee_result["hi"]) / manuscript_width],
            marker="*", s=250, color="tab:red", zorder=5, label="referee-informed (discrete)")
 ax.axhline(1.0, color="gray", linestyle=":", linewidth=1)
 ax.set_xlabel(r"assumed within-group correlation $\rho$")
-ax.set_ylabel("68% width / published width")
+ax.set_ylabel("68% width / manuscript width")
 ax.set_title("Posterior width vs.\nindependence assumption", fontsize=13)
 ax.legend(fontsize=9)
 
@@ -348,7 +348,7 @@ medians_grouped = [r["median"] for r in grouped_results]
 ax2.plot(rho_values, medians_global, "o-", color="black", label="global")
 ax2.plot(rho_values, medians_grouped, "s-", color="tab:blue", label="grouped by paper")
 ax2.scatter([1.0], [referee_result["median"]], marker="*", s=250, color="tab:red", zorder=5)
-ax2.axhline(published["median"], color="gray", linestyle=":", linewidth=1, label="published median")
+ax2.axhline(manuscript["median"], color="gray", linestyle=":", linewidth=1, label="manuscript median")
 ax2.set_xlabel(r"assumed within-group correlation $\rho$")
 ax2.set_ylabel("posterior median compactness $C$")
 ax2.set_title("Posterior position vs.\nindependence assumption", fontsize=13)
@@ -359,7 +359,7 @@ fig.savefig(os.path.join(FIG_DIR, "compactness_width_vs_rho.png"), dpi=200)
 
 fig2, ax3 = plt.subplots(figsize=(8, 5.5))
 for label, res, color in [
-    ("published (rho=0)", published, "black"),
+    ("manuscript (rho=0)", manuscript, "black"),
     ("grouped_by_paper, rho=1\n(4 independent groups)", grouped_rho1, "tab:blue"),
     ("referee_informed", referee_result, "tab:red"),
     ("global, rho=1\n(1 independent measurement)", global_rho1, "tab:gray"),

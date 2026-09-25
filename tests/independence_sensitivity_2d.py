@@ -51,8 +51,8 @@ GROUPS = {
     "Kini":        ["PDT_U26"],
 }
 
-PUBLISHED_M = dict(median=1.46, lo=0.08, hi=0.09)
-PUBLISHED_R = dict(median=12.69, lo=0.55, hi=0.64)
+MANUSCRIPT_M = dict(median=1.46, lo=0.08, hi=0.09)
+MANUSCRIPT_R = dict(median=12.69, lo=0.55, hi=0.64)
 
 # ----------------------------------------------------------------------------
 # Load data, build good (KDE) densities on the (M, R) grid
@@ -84,7 +84,7 @@ g_stack = np.array([g_dict[key] for key in MODEL_KEYS])  # (8, NM, NR)
 
 # Hyperparameter grids -- reduced resolution relative to
 # 2D_MassRadius_Combination.ipynb to keep the rho-sweep tractable; the
-# rho=0 ("published") case below is checked against the manuscript to
+# rho=0 ("manuscript") case below is checked against the manuscript to
 # confirm this reduction doesn't change the answer materially.
 avg_S_Mi = np.mean(list(S_Mi.values()))
 avg_S_Ri = np.mean(list(S_Ri.values()))
@@ -229,15 +229,15 @@ def referee_informed_weights():
     return {key: w for key in MODEL_KEYS}, n_eff
 
 
-print("\nRunning scenarios (published sanity check first)...")
-published = combine_2d({key: 1.0 for key in MODEL_KEYS})
+print("\nRunning scenarios (manuscript sanity check first)...")
+manuscript = combine_2d({key: 1.0 for key in MODEL_KEYS})
 print("=" * 70)
 print("SANITY CHECK against manuscript.tex Sec 3.2 (note: coarser grid than the")
 print("original notebook, so agreement is approximate, not exact):")
-print(f"  script:     M = {published['M_median']:.3f} +{published['M_hi']:.3f}/-{published['M_lo']:.3f}   "
-      f"R = {published['R_median']:.3f} +{published['R_hi']:.3f}/-{published['R_lo']:.3f}")
-print(f"  manuscript: M = {PUBLISHED_M['median']:.3f} +{PUBLISHED_M['hi']:.3f}/-{PUBLISHED_M['lo']:.3f}   "
-      f"R = {PUBLISHED_R['median']:.3f} +{PUBLISHED_R['hi']:.3f}/-{PUBLISHED_R['lo']:.3f}")
+print(f"  script:     M = {manuscript['M_median']:.3f} +{manuscript['M_hi']:.3f}/-{manuscript['M_lo']:.3f}   "
+      f"R = {manuscript['R_median']:.3f} +{manuscript['R_hi']:.3f}/-{manuscript['R_lo']:.3f}")
+print(f"  manuscript: M = {MANUSCRIPT_M['median']:.3f} +{MANUSCRIPT_M['hi']:.3f}/-{MANUSCRIPT_M['lo']:.3f}   "
+      f"R = {MANUSCRIPT_R['median']:.3f} +{MANUSCRIPT_R['hi']:.3f}/-{MANUSCRIPT_R['lo']:.3f}")
 print("=" * 70)
 
 rho_values = np.linspace(0.0, 1.0, 6)
@@ -255,16 +255,16 @@ global_rho1 = combine_2d(global_weights(1.0))
 print("  discrete scenarios done")
 
 print(f"\nreferee_informed effective N = {ref_n_eff:.2f} (nominal N=8)")
-print("\nScenario                          M (median)     R (median)     M-width/pub   R-width/pub")
-pub_M_width = published["M_lo"] + published["M_hi"]
-pub_R_width = published["R_lo"] + published["R_hi"]
+print("\nScenario                          M (median)     R (median)     M-width/ms    R-width/ms")
+manuscript_M_width = manuscript["M_lo"] + manuscript["M_hi"]
+manuscript_R_width = manuscript["R_lo"] + manuscript["R_hi"]
 
 def _row(label, res):
-    mw = (res["M_lo"] + res["M_hi"]) / pub_M_width
-    rw = (res["R_lo"] + res["R_hi"]) / pub_R_width
+    mw = (res["M_lo"] + res["M_hi"]) / manuscript_M_width
+    rw = (res["R_lo"] + res["R_hi"]) / manuscript_R_width
     print(f"{label:<34} {res['M_median']:.3f}          {res['R_median']:.3f}          {mw:.2f}x         {rw:.2f}x")
 
-_row("published (rho=0)", published)
+_row("manuscript (rho=0)", manuscript)
 _row("grouped_by_paper, rho=1", grouped_rho1)
 _row("referee_informed", referee_result)
 _row("global, rho=1", global_rho1)
@@ -276,30 +276,30 @@ _row("global, rho=1", global_rho1)
 plt.rcParams.update({"font.size": 12})
 fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
 
-widths_M_global = [(r["M_lo"] + r["M_hi"]) / pub_M_width for r in global_results]
-widths_M_grouped = [(r["M_lo"] + r["M_hi"]) / pub_M_width for r in grouped_results]
-widths_R_global = [(r["R_lo"] + r["R_hi"]) / pub_R_width for r in global_results]
-widths_R_grouped = [(r["R_lo"] + r["R_hi"]) / pub_R_width for r in grouped_results]
+widths_M_global = [(r["M_lo"] + r["M_hi"]) / manuscript_M_width for r in global_results]
+widths_M_grouped = [(r["M_lo"] + r["M_hi"]) / manuscript_M_width for r in grouped_results]
+widths_R_global = [(r["R_lo"] + r["R_hi"]) / manuscript_R_width for r in global_results]
+widths_R_grouped = [(r["R_lo"] + r["R_hi"]) / manuscript_R_width for r in grouped_results]
 
 ax = axes[0]
 ax.plot(rho_values, widths_M_global, "o-", color="black", label="global, all 8")
 ax.plot(rho_values, widths_M_grouped, "s-", color="tab:blue", label="grouped by paper")
-ax.scatter([1.0], [(referee_result["M_lo"] + referee_result["M_hi"]) / pub_M_width],
+ax.scatter([1.0], [(referee_result["M_lo"] + referee_result["M_hi"]) / manuscript_M_width],
            marker="*", s=250, color="tab:red", zorder=5, label="referee-informed")
 ax.axhline(1.0, color="gray", linestyle=":", linewidth=1)
 ax.set_xlabel(r"assumed within-group correlation $\rho$")
-ax.set_ylabel("68% width / published width")
+ax.set_ylabel("68% width / manuscript width")
 ax.set_title("Mass posterior width", fontsize=13)
 ax.legend(fontsize=9)
 
 ax2 = axes[1]
 ax2.plot(rho_values, widths_R_global, "o-", color="black", label="global, all 8")
 ax2.plot(rho_values, widths_R_grouped, "s-", color="tab:blue", label="grouped by paper")
-ax2.scatter([1.0], [(referee_result["R_lo"] + referee_result["R_hi"]) / pub_R_width],
+ax2.scatter([1.0], [(referee_result["R_lo"] + referee_result["R_hi"]) / manuscript_R_width],
             marker="*", s=250, color="tab:red", zorder=5, label="referee-informed")
 ax2.axhline(1.0, color="gray", linestyle=":", linewidth=1)
 ax2.set_xlabel(r"assumed within-group correlation $\rho$")
-ax2.set_ylabel("68% width / published width")
+ax2.set_ylabel("68% width / manuscript width")
 ax2.set_title("Radius posterior width", fontsize=13)
 ax2.legend(fontsize=9)
 
@@ -308,7 +308,7 @@ fig.savefig(os.path.join(FIG_DIR, "MR_width_vs_rho.png"), dpi=200)
 
 fig2, (axM, axR) = plt.subplots(1, 2, figsize=(13, 5))
 for label, res, color in [
-    ("published", published, "black"),
+    ("manuscript", manuscript, "black"),
     ("grouped_by_paper, rho=1", grouped_rho1, "tab:blue"),
     ("referee_informed", referee_result, "tab:red"),
     ("global, rho=1", global_rho1, "tab:gray"),
@@ -341,7 +341,7 @@ def compute_hdr_levels(pdf, probs=(0.68, 0.95)):
 
 fig3, ax3 = plt.subplots(figsize=(8, 7))
 for label, res, color in [
-    ("published", published, "black"),
+    ("manuscript", manuscript, "black"),
     ("grouped_by_paper, rho=1", grouped_rho1, "tab:blue"),
     ("referee_informed", referee_result, "tab:red"),
     ("global, rho=1", global_rho1, "tab:gray"),
@@ -368,7 +368,7 @@ ax3.minorticks_on()
 ax3.tick_params(which="both", top=True, right=True)
 ax3.legend(
     handles=[
-        mpl.lines.Line2D([], [], color="black", lw=2, label="published"),
+        mpl.lines.Line2D([], [], color="black", lw=2, label="manuscript"),
         mpl.lines.Line2D([], [], color="tab:blue", lw=2, label="grouped_by_paper, rho=1"),
         mpl.lines.Line2D([], [], color="tab:red", lw=2, label="referee_informed"),
         mpl.lines.Line2D([], [], color="tab:gray", lw=2, label="global, rho=1"),

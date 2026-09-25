@@ -1,4 +1,4 @@
-Published manuscript (current)
+Current manuscript (unpublished)
 Each measurement's likelihood is a good/bad mixture:
 $$\ell_i(C) = p,P_{G,i}(C) + (1-p),P_{B,i}(C)$$
 

@@ -8,33 +8,33 @@ direction on the independence fix" note): rather than sweeping or fixing a
 handful of discrete correlation scenarios (tests/independence_sensitivity.py,
 "Option B"), the inter-posterior correlation rho is treated as a genuine
 hyperparameter with its own prior and is marginalized out -- exactly as
-sigma/alpha/p are already marginalized in the published method -- alongside a
+sigma/alpha/p are already marginalized in the manuscript method -- alongside a
 new group-level systematic width sigma_sys that convolves the pooled
 posterior (PDF Eqs. 5-31).
 
 Deviations from the PDF's literal description, and why:
   - The mixing probability p is kept SHARED across all 8 measurements, as in
-    the published notebooks / independence_sensitivity.py, rather than given
+    the manuscript notebooks / independence_sensitivity.py, rather than given
     an independent p_i per measurement (PDF Eq. 17-18 allows either). This
     isolates rho-tempering + sigma_sys as the only new ingredients relative
-    to the published method, so the rho=0, sigma_sys=0 limit reproduces the
-    published C = 0.172 result exactly (PDF Sec. 9 checklist item 6). Ryan
+    to the manuscript method, so the rho=0, sigma_sys=0 limit reproduces the
+    manuscript C = 0.172 result exactly (PDF Sec. 9 checklist item 6). Ryan
     confirmed this choice explicitly (2026-09-10).
   - sigma (bad-component shift-prior width), alpha, and delta remain
     marginalized by the exact same deterministic trapezoid quadrature as the
-    published method (not Monte Carlo sampling, as the PDF's pseudocode
+    manuscript method (not Monte Carlo sampling, as the PDF's pseudocode
     literally suggests). This is mathematically equivalent to prior-
-    predictive marginalization: the published code's "evidence-weighted
+    predictive marginalization: the manuscript code's "evidence-weighted
     posterior over sigma" and a plain prior-weighted average over sigma are
     the same integral (the per-sigma normalization Z(sigma) cancels exactly
     when you substitute one into the other). Reusing the identical grids and
-    quadrature lets this script reproduce the published numbers bit-for-bit
+    quadrature lets this script reproduce the manuscript numbers bit-for-bit
     at rho=0, sigma_sys=0, and isolates what's actually new.
   - rho and sigma_sys, being new dimensions with no legacy behavior to
     reproduce, are marginalized with proper trapezoidal integration weights
-    (np.trapz over the grid), unlike the published sigma marginalization
+    (np.trapz over the grid), unlike the manuscript sigma marginalization
     (which sums over its log-spaced grid without a dsigma weighting factor --
-    a published quirk this script deliberately does not propagate to the new
+    a manuscript quirk this script deliberately does not propagate to the new
     dimensions).
 
 Recommended diagnostic scenarios (PDF Sec. 7), all reproduced below:
@@ -85,7 +85,7 @@ MODELS = {
 MODEL_KEYS = list(MODELS)
 N_MODELS = len(MODEL_KEYS)
 
-PUBLISHED_C = dict(median=0.172, lo=0.007, hi=0.006)  # manuscript.tex Sec 3.1
+MANUSCRIPT_C = dict(median=0.172, lo=0.007, hi=0.006)  # manuscript.tex Sec 3.1
 
 # ----------------------------------------------------------------------------
 # Load data, build good (KDE) densities for compactness -- identical to
@@ -111,13 +111,13 @@ for key, meta in MODELS.items():
 # the scatter of the 8 models' own compactness medians.
 S_C_SYS_SCALE = np.std(list(C_med.values()))
 
-# Grid is deliberately IDENTICAL to the published notebook/independence_sensitivity.py
+# Grid is deliberately IDENTICAL to the manuscript notebook/independence_sensitivity.py
 # (raw data range, 200 points, no padding) -- NOT padded for the sigma_sys
 # convolution margin the PDF recommends (Sec 4.1). Padding was tried and
 # rejected: it changes how the bad component's Gaussian tails get truncated
 # and renormalized within-domain, which shifts the rho=0 result enough to
-# break the "reproduce the published number" sanity check (0.0128 unpadded
-# vs. 0.0093 with a +/-4*S_C_SYS_SCALE pad, against a published width of
+# break the "reproduce the manuscript number" sanity check (0.0128 unpadded
+# vs. 0.0093 with a +/-4*S_C_SYS_SCALE pad, against a manuscript width of
 # 0.013). Consequence: the sigma_sys convolution below (grid_sys section)
 # loses a little mass near the domain edges for models whose posteriors sit
 # close to C_min_raw/C_max_raw -- acceptable for this diagnostic script, but
@@ -133,7 +133,7 @@ for key in MODEL_KEYS:
     g_dict[key] = g / np.trapz(g, C_grid)
 g_stack = np.array([g_dict[key] for key in MODEL_KEYS])  # (8, NC)
 
-# Hyperparameter grids -- identical to the published notebook.
+# Hyperparameter grids -- identical to the manuscript notebook.
 sigma_grid = np.logspace(-4, -0.5, 15)
 alpha_grid = np.linspace(1.0, 5.0, 30)
 p_grid = np.linspace(0.0, 1.0, 60)
@@ -170,27 +170,27 @@ for key in MODEL_KEYS:
 
 def design_effect_power(n, rho):
     """kappa(rho) = 1 / (1 + (n-1)*rho); PDF Eq. 6. rho=0 -> kappa=1 (no
-    tempering, published limit); rho=1 -> kappa=1/n (one effective dataset)."""
+    tempering, manuscript limit); rho=1 -> kappa=1/n (one effective dataset)."""
     return 1.0 / (1.0 + (n - 1) * rho)
 
 
 def combine_1d_given_kappa(kappa):
     """Good/bad combination with every measurement's mixture raised to the
     same power kappa before the product over models (PDF Eq. 5 with equal
-    weights w_i=1). kappa=1 reproduces the published (untempered) method
+    weights w_i=1). kappa=1 reproduces the manuscript (untempered) method
     exactly -- same computation as tests/independence_sensitivity.py's
     combine_1d with a uniform weight dict.
 
     Returns a dict with:
       posterior       -- final combined density over C_grid (normalized to 1)
       posterior_sigma -- posterior weights over sigma_grid (normalized to 1,
-                          via the published plain-sum convention); exposed so
+                          via the manuscript plain-sum convention); exposed so
                           the per-model credibility diagnostic can reuse the
                           identical sigma-marginalization used here instead
                           of recomputing it
       evidence        -- total marginal evidence Z(kappa) = integral over
                           sigma of evidence_sigma(sigma)*prior_sigma(sigma).
-                          NOT used anywhere in the published or tempered
+                          NOT used anywhere in the manuscript or tempered
                           posterior itself (that's fully renormalized away);
                           exposed only for the "data-implied rho" diagnostic,
                           which asks how this un-normalized total mass moves
@@ -251,7 +251,7 @@ def rho_prior_uniform(rho):
 def compute_rho_sweep():
     """Run combine_1d_given_kappa once per RHO_GRID point and cache the
     results -- reused by every rho-related diagnostic below (marginalization
-    under different priors, the published/fully-correlated endpoints, and
+    under different priors, the manuscript/fully-correlated endpoints, and
     the data-implied-rho evidence plot) instead of recomputing the same
     kappa(rho) values redundantly per prior."""
     posts, sigmas, evids = [], [], []
@@ -310,14 +310,14 @@ def marginalize_sigma_sys(density_in, scale):
 # Diagnostic scenarios (PDF Sec. 7)
 # ----------------------------------------------------------------------------
 
-published = RHO_SWEEP_POSTERIORS[0]                                        # rho=0 (first RHO_GRID point), sigma_sys=0
+manuscript = RHO_SWEEP_POSTERIORS[0]                                        # rho=0 (first RHO_GRID point), sigma_sys=0
 fully_correlated = RHO_SWEEP_POSTERIORS[-1]                                # rho=1 (last RHO_GRID point), sigma_sys=0
 rho_uniform = marginalize_rho(rho_prior_uniform)                           # rho~U(0,1), sigma_sys=0
 rho_beta41_nosys = marginalize_rho(rho_prior_beta41)                       # rho~Beta(4,1), sigma_sys=0
 rho_beta41_sys = marginalize_sigma_sys(rho_beta41_nosys, S_C_SYS_SCALE)    # main conservative result
 
 scenarios = {
-    "published (rho=0, sigma_sys=0)": published,
+    "manuscript (rho=0, sigma_sys=0)": manuscript,
     "fully correlated (rho=1, sigma_sys=0)": fully_correlated,
     "rho ~ Uniform(0,1), sigma_sys=0": rho_uniform,
     "rho ~ Beta(4,1), sigma_sys=0": rho_beta41_nosys,
@@ -330,19 +330,19 @@ scenarios = {
 
 print("=" * 78)
 print("SANITY CHECK against manuscript.tex Sec 3.1 (rho=0, sigma_sys=0 limit):")
-q_pub = quantiles(published)
-print(f"  script:     C = {q_pub['median']:.4f} +{q_pub['hi']:.4f} / -{q_pub['lo']:.4f}")
-print(f"  manuscript: C = {PUBLISHED_C['median']:.4f} +{PUBLISHED_C['hi']:.4f} / -{PUBLISHED_C['lo']:.4f}")
+q_manuscript = quantiles(manuscript)
+print(f"  script:     C = {q_manuscript['median']:.4f} +{q_manuscript['hi']:.4f} / -{q_manuscript['lo']:.4f}")
+print(f"  manuscript: C = {MANUSCRIPT_C['median']:.4f} +{MANUSCRIPT_C['hi']:.4f} / -{MANUSCRIPT_C['lo']:.4f}")
 print("=" * 78)
 
 print(f"\nData-driven group-systematic scale s_C = std(median(C_i)) = {S_C_SYS_SCALE:.5f}")
 
-pub_width = q_pub["lo"] + q_pub["hi"]
-print("\nScenario                                             C (median)   width (68%)   width / published")
+manuscript_width = q_manuscript["lo"] + q_manuscript["hi"]
+print("\nScenario                                             C (median)   width (68%)   width / manuscript")
 for label, post in scenarios.items():
     q = quantiles(post)
     width = q["lo"] + q["hi"]
-    print(f"{label:<52} {q['median']:.4f}       {width:.4f}        {width/pub_width:.2f}x")
+    print(f"{label:<52} {q['median']:.4f}       {width:.4f}        {width/manuscript_width:.2f}x")
 
 # ----------------------------------------------------------------------------
 # New diagnostic: data-implied rho (evidence vs. rho)
@@ -352,7 +352,7 @@ for label, post in scenarios.items():
 # checks empirically what a naive evidence-based choice of rho WOULD do, and
 # the result is worth stating precisely rather than guessing: Z(rho) turns out
 # to be monotonically DECREASING in rho (maximized at rho=0, i.e. the
-# published independence assumption) -- the opposite of the first guess
+# manuscript independence assumption) -- the opposite of the first guess
 # written here originally ("tempering trivially raises the pooled integral").
 # The actual mechanism: most of the 8 good KDEs peak in overlapping regions of
 # C, so the untempered product (kappa=1) reinforces that overlap into a very
@@ -382,7 +382,7 @@ print(f"  Z(rho) monotonically non-increasing in rho: {monotonic_decreasing}"
 # (2D_MassRadius_Combination.ipynb, "Posterior values of P_i") in 1D
 # compactness space: for each model, the combined-posterior-weighted average
 # probability that ITS OWN good KDE (rather than its own bad component)
-# explains the data. Two deliberate differences from the published notebook:
+# explains the data. Two deliberate differences from the manuscript notebook:
 #   (1) computed here in 1D compactness, not 2D (M,R) -- so it will NOT
 #       exactly reproduce the manuscript's printed P_i numbers (0.20-0.81),
 #       only their rough ordering, if that.
