@@ -279,14 +279,7 @@ def fig_tempering(res):
     ax.legend(handles=handles, loc="lower right", fontsize=14, frameon=True,
               fancybox=True, framealpha=0.9, labelspacing=0.8)
     fig.suptitle(r"Effect of Correlation Tempering", y=0.975, fontsize=27)
-    fig.text(0.08, 0.012,
-             r"All curves are combined in $(M, C)$ and mapped to $(M, R)$. $\rho=0$ treats the 8 inputs as "
-             r"independent;" "\n"
-             r"$\rho=1$ as one effective measurement ($\kappa = 1/8$). The default marginalizes $\rho$ over "
-             r"Uniform(0,1)" "\n"
-             r"and adds the group-level systematic $\Sigma_{\rm sys}$.",
-             fontsize=13, color=MUTED, ha="left", va="bottom")
-    fig.subplots_adjust(left=0.09, right=0.98, top=0.92, bottom=0.17)
+    fig.subplots_adjust(left=0.09, right=0.98, top=0.92, bottom=0.10)
     return save(fig, "CorrelationTempering.png")
 
 
