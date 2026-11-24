@@ -1,5 +1,5 @@
-# Both numpy < 2 and numpy >= 2 work (core.py falls back to np.trapz).
 numpy
 scipy
 matplotlib
 seaborn
+jupyter

@@ -1,34 +1,28 @@
 """
-Figures of the revised combination, written to revised_method/figures/.
+Figures of the paper, written to figures/ and returned for inline display.
 
-    python3 revised_method/plots.py              # all figures
-    python3 revised_method/plots.py 3x3 tempering  # a subset
+  fig_compactness  KDECompactness.png                compactness of each input and the combined C marginal
+  fig_3x3          3x3Posterior.png                  each input's M-R posterior against the combined one
+  fig_tempering    CorrelationTempering.png          rho = 0, rho = 1 and the adopted prescription
+  fig_marginals    MarginalPosteriors.png            combined M-R posterior with its M and R marginals
+  fig_other_ns     PosteriorvsOtherNeutronStars.png  combined posterior next to PSR J0437-4715 and GW170817
 
-  compactness  KDECompactness.png               counterpart of manuscript Fig. 1
-  3x3          3x3Posterior.png                 counterpart of manuscript Fig. 2
-  marginals    MarginalPosteriors.png           counterpart of manuscript Fig. 3
-  other_ns     PosteriorvsOtherNeutronStars.png counterpart of manuscript Fig. 4 (left)
-  tempering    CorrelationTempering.png         rho=0 vs rho=1 vs the default, all (M, C); no marginal panels
-
-All "combined" curves are the default posterior (computed in (M, C),
-rho ~ Uniform(0,1), Sigma_sys marginalized). The 2D ones are mapped to (M, R)
-with the Jacobian K M / R^2; the compactness one is the C marginal of the same
-2D posterior, so all headline numbers come from one computation. Reads
-results/combined_MC.npz.
+"Combined" always means the adopted posterior (computed in (M, C),
+rho ~ Uniform(0, 1), Sigma_sys marginalized). The 2D curves are mapped to
+(M, R) with the Jacobian K M / R^2, and the compactness curve is the C
+marginal of the same 2D posterior. Each function takes the results dict from
+method.run() or method.load_results().
 """
 
-import argparse
 import os
 
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import gaussian_kde
 
-import core
-from core import MODELS, trapz
+from . import method as core
+from .method import MODELS, trapz
 
 DEFAULT = core.DEFAULT_SCENARIO
 
@@ -45,8 +39,8 @@ def save(fig, name, dpi=300, **kw):
     os.makedirs(core.FIG_DIR, exist_ok=True)
     path = os.path.join(core.FIG_DIR, name)
     fig.savefig(path, dpi=dpi, **kw)
-    plt.close(fig)
     print(f"wrote {os.path.relpath(path, core.REPO_ROOT)}")
+    return fig
 
 
 def kde_on_grid(samples_xy, x_grid, y_grid):
@@ -75,12 +69,12 @@ def draw_hdr(ax, x, y, density, color, fill_alphas, line_alpha=0.7, widths=(1.3,
 
 
 # ----------------------------------------------------------------------------
-# Fig. 1: compactness
+# Compactness
 # ----------------------------------------------------------------------------
 
 
 def fig_compactness(res):
-    # Individual 1D KDEs exactly as in 1D_Compactness_Combination.ipynb.
+    # Individual 1D Silverman KDEs of each input's compactness samples.
     C_samples = {}
     for key in MODELS:
         M, R = core.load_samples(key)
@@ -105,11 +99,11 @@ def fig_compactness(res):
     ax.set_title("Combined Compactness Posterior with Individual KDEs", fontsize=24)
     ax.tick_params(labelsize=16)
     ax.legend(fontsize=13)
-    save(fig, "KDECompactness.png", bbox_inches="tight")
+    return save(fig, "KDECompactness.png", bbox_inches="tight")
 
 
 # ----------------------------------------------------------------------------
-# Fig. 2: 3x3 panels
+# Inputs against the combined posterior
 # ----------------------------------------------------------------------------
 
 
@@ -117,8 +111,7 @@ def fig_3x3(res):
     M_grid, R_grid = res["M_grid"], res["R_grid"]
     post, _, _ = core.marginals_MR(res, DEFAULT)
     R_lim, M_lim = hdr_extent(post, M_grid, R_grid)
-    # Inputs: plain (M, R) Silverman KDEs, as in 2D_MassRadius_Combination.ipynb,
-    # on a display grid (some inputs have up to 10^6 samples).
+    # Inputs: (M, R) Silverman KDEs on a display grid (some inputs have up to 10^6 samples).
     M_disp, R_disp = np.linspace(*M_lim, 90), np.linspace(*R_lim, 120)
     g = {key: kde_on_grid(np.vstack(core.load_samples(key)), M_disp, R_disp) for key in MODELS}
 
@@ -149,11 +142,11 @@ def fig_3x3(res):
     style(ax_all, "All Models")
 
     fig.suptitle("Model M--R Posteriors Compared to Posterior Combination", fontsize=36)
-    save(fig, "3x3Posterior.png", dpi=100)
+    return save(fig, "3x3Posterior.png", dpi=100)
 
 
 # ----------------------------------------------------------------------------
-# Fig. 3: joint posterior with marginals
+# Joint posterior with marginals
 # ----------------------------------------------------------------------------
 
 
@@ -194,11 +187,11 @@ def fig_marginals(res):
     g.ax_marg_x.tick_params(labelsize=14)
     g.ax_marg_y.tick_params(labelsize=14)
     g.fig.suptitle("Combined Posterior with Marginal Distributions", fontsize=27, y=1.05)
-    save(g.fig, "MarginalPosteriors.png", bbox_inches="tight")
+    return save(g.fig, "MarginalPosteriors.png", bbox_inches="tight")
 
 
 # ----------------------------------------------------------------------------
-# Fig. 4 (left): other neutron stars
+# Comparison with other neutron stars
 # ----------------------------------------------------------------------------
 
 
@@ -237,11 +230,11 @@ def fig_other_ns(res):
     ax.set_ylim(*M_lim)
     ax.minorticks_on()
     ax.tick_params(which="both", top=True, right=True, labelsize=16)
-    save(fig, "PosteriorvsOtherNeutronStars.png")
+    return save(fig, "PosteriorvsOtherNeutronStars.png")
 
 
 # ----------------------------------------------------------------------------
-# Effect of tempering and of (M, C)
+# Effect of correlation tempering
 # ----------------------------------------------------------------------------
 
 TEMPERING_COLORS = dict(rho0="#1f1f1e", rho1="#eb6834", default="#1baf7a")
@@ -294,26 +287,13 @@ def fig_tempering(res):
              r"and adds the group-level systematic $\Sigma_{\rm sys}$.",
              fontsize=13, color=MUTED, ha="left", va="bottom")
     fig.subplots_adjust(left=0.09, right=0.98, top=0.92, bottom=0.17)
-    save(fig, "CorrelationTempering.png")
+    return save(fig, "CorrelationTempering.png")
 
 
-FIGURES = dict(compactness=fig_compactness, **{"3x3": fig_3x3}, marginals=fig_marginals,
-               other_ns=fig_other_ns, tempering=fig_tempering)
+FIGURES = [fig_compactness, fig_3x3, fig_tempering, fig_marginals, fig_other_ns]
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("names", nargs="*", metavar="figure", help=f"any of {list(FIGURES)} (default: all)")
-    args = parser.parse_args()
-    unknown = [n for n in args.names if n not in FIGURES]
-    if unknown:
-        parser.error(f"unknown figure(s) {unknown}; choose from {list(FIGURES)}")
-    names = args.names or list(FIGURES)
-    core.use_paper_style()
-    res = core.load_results("MC")
-    for n in names:
-        FIGURES[n](res)
-
-
-if __name__ == "__main__":
-    main()
+def make_all(res):
+    """Write all five figures."""
+    for f in FIGURES:
+        f(res)
