@@ -3,15 +3,4 @@ __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
 .vscode/
-feedback.md
-manuscript.tex
-revision_options.md
-archive/
-
-# Paper drafts and bookkeeping (kept local, not part of the public package)
-revision_draft.tex
-revision_checklist.md
-next_steps.md
-CLAUDE.md
-.claude/settings.local.json
 .DS_Store
